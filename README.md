@@ -30,6 +30,6 @@ A companion essay (`contrast.html`) that teaches the loop claim by contrast, in 
 1. **One arrow apart.** An animated diagram that cuts the six-station ring and unrolls it into a flat pipeline. The return arrow dangles into nothing, and the self fades out with its spokes: a pipeline has no hub for a self to occupy.
 2. **The twin experiment.** The same live reservoir, with a "cut" button that clones the memory's readout and freezes the copy. Memory and recording are identical at the instant of the cut, then part company as the world drifts. The divergence wedge between their error curves is the argument.
 
-Both pages carry a shared series nav linking Vol. I ([spreading-activation-demo](https://ianpilon.github.io/spreading-activation-demo/)), Vol. II (`index.html`), and Vol. III (`contrast.html`).
+All three volumes live in this repo and carry a shared series nav: Vol. I (`activation.html`, a copy of [spreading-activation-demo](https://github.com/ianpilon/spreading-activation-demo)), Vol. II (`index.html`), and Vol. III (`contrast.html`), so you can move between volumes without leaving the site.
 
 Each page is one self-contained HTML file: inline CSS, canvas simulation, and SVG, no external assets. Companion to [memory-living-loop](https://github.com/ianpilon/memory-living-loop).

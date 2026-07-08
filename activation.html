@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spreading activation — how one memory wakes another</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:        #f4ede0;
+    --paper-deep:   #ebe1cf;
+    --ink:          #1d1a14;
+    --ink-soft:     #4a4438;
+    --ink-mute:     #7a7263;
+    --rule:         #c9bda3;
+    --rule-soft:    #ddd2ba;
+    --accent:       #c44a3b;
+    --accent-deep:  #7a2b1f;
+    --hot:          #E24B4A;
+    --strong:       #EF9F27;
+    --weak:         #FAC775;
+    --off:          #c9bda3;
+    --off-stroke:   #8a7f6a;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(0,0,0,0.025) 1px, transparent 1.5px),
+      radial-gradient(circle at 76% 42%, rgba(0,0,0,0.02) 1px, transparent 1.5px),
+      radial-gradient(circle at 32% 78%, rgba(0,0,0,0.025) 1px, transparent 1.5px),
+      radial-gradient(circle at 88% 92%, rgba(0,0,0,0.02) 1px, transparent 1.5px);
+    background-size: 220px 220px, 180px 180px, 260px 260px, 200px 200px;
+  }
+
+  .frame {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 64px 32px 96px;
+  }
+
+
+  .series-nav {
+    display: flex;
+    gap: 8px 26px;
+    flex-wrap: wrap;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+    margin: 0 0 40px;
+  }
+  .series-nav a { color: var(--ink-mute); text-decoration: none; }
+  .series-nav a:hover { color: var(--accent-deep); text-decoration: underline; }
+  .series-nav .here { color: var(--accent); font-weight: 500; }
+
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin: 0 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .kicker::before, .kicker::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: clamp(40px, 6vw, 68px);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+    margin: 0 0 24px;
+    font-style: italic;
+  }
+
+  h1 .accent {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 500;
+  }
+
+  .dek {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0 0 8px;
+  }
+
+  .byline {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: 32px 0 56px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 28px;
+    letter-spacing: -0.01em;
+    margin: 56px 0 16px;
+  }
+
+  h2 .num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--accent);
+    margin-right: 12px;
+    vertical-align: middle;
+    font-weight: 500;
+  }
+
+  p {
+    font-size: 17px;
+    margin: 0 0 18px;
+    color: var(--ink);
+  }
+
+  p.lead::first-letter {
+    font-family: 'Fraunces', serif;
+    font-size: 56px;
+    font-weight: 500;
+    float: left;
+    line-height: 0.9;
+    margin: 6px 10px 0 0;
+    color: var(--accent);
+  }
+
+  .panel {
+    background: #fbf6ea;
+    border: 1px solid var(--rule);
+    padding: 28px;
+    margin: 40px 0;
+    position: relative;
+  }
+
+  .panel::before {
+    content: '';
+    position: absolute;
+    top: -1px; left: -1px; right: -1px; bottom: -1px;
+    border: 1px solid var(--rule-soft);
+    pointer-events: none;
+    transform: translate(6px, 6px);
+    z-index: -1;
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .control-group label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+
+  select, button, input[type="range"] {
+    font-family: 'Inter', sans-serif;
+  }
+
+  select {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 8px 14px;
+    font-size: 14px;
+    color: var(--ink);
+    cursor: pointer;
+    border-radius: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 32px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%234a4438' stroke-width='1.2' fill='none'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+  }
+
+  select:focus, button:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  button.fire {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 0;
+    transition: background 0.15s;
+  }
+
+  button.fire:hover {
+    background: var(--accent);
+  }
+
+  button.fire:active {
+    transform: translateY(1px);
+  }
+
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .slider-row label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    min-width: 110px;
+  }
+
+  input[type="range"] {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--rule);
+    border-radius: 0;
+    outline: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--paper);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .speed-out {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 48px;
+    text-align: right;
+    color: var(--ink);
+  }
+
+  .stage {
+    width: 100%;
+    aspect-ratio: 680 / 420;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stage svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+
+  .legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .pullquote {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 24px;
+    line-height: 1.35;
+    color: var(--ink-soft);
+    border-left: 3px solid var(--accent);
+    padding: 8px 0 8px 24px;
+    margin: 36px 0;
+  }
+
+  .footnote {
+    font-size: 14px;
+    color: var(--ink-mute);
+    font-style: italic;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+    margin-top: 32px;
+  }
+
+  ul.notes {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+  }
+
+  ul.notes li {
+    position: relative;
+    padding-left: 28px;
+    margin-bottom: 14px;
+    font-size: 16px;
+  }
+
+  ul.notes li::before {
+    content: counter(item, decimal-leading-zero);
+    counter-increment: item;
+    position: absolute;
+    left: 0;
+    top: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  ul.notes { counter-reset: item; }
+
+  ul.notes strong {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-style: italic;
+    color: var(--ink);
+  }
+
+  @media (max-width: 640px) {
+    .frame { padding: 40px 20px 64px; }
+    h1 { font-size: 38px; }
+    .dek { font-size: 17px; }
+    .panel { padding: 18px; margin: 28px 0; }
+    .slider-row label { min-width: 80px; font-size: 10px; }
+    .controls { gap: 12px; }
+    h2 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<main class="frame">
+
+  <nav class="series-nav" aria-label="Field Notes series">
+    <span class="here" aria-current="page">Vol. I · Spreading activation</span>
+    <a href="index.html">Vol. II · The engine</a>
+    <a href="contrast.html">Vol. III · Cut open</a>
+  </nav>
+
+  <p class="kicker">Cognitive Science · Field Notes · Vol. I</p>
+
+  <h1>How one memory <span class="accent">wakes another</span></h1>
+
+  <p class="dek">A small interactive model that lets you watch <em>spreading activation</em> in slow motion — the way a single thought lights up a network of related ideas, fades, and gets reshaped by whatever your brain is preoccupied with.</p>
+
+  <div class="byline">
+    <span>An interactive essay</span>
+    <span>Read time · 4 min</span>
+  </div>
+
+  <p class="lead">When you think of ice cream, your brain does not retrieve a single tidy memory. It lights up a small constellation: <em>cold</em>, <em>summer</em>, <em>sweet</em>, maybe a birthday party from years ago, maybe a sticky hand. The lights bloom together, hold for a moment, then fade. Cognitive scientists call this <strong>spreading activation</strong>, and it is one of the better-supported ideas about how memory actually works.</p>
+
+  <p>The classic explanation makes it sound orderly — one memory activates another, which activates another, in a chain. The real picture is messier and more interesting. Three things in particular are easy to miss when you read about it in text:</p>
+
+  <ul class="notes">
+    <li>The lights <strong>fade fast</strong>. Activation isn't a switch you flip — it's a pulse that decays in fractions of a second.</li>
+    <li>Many nodes light up <strong>in parallel</strong>, not in a tidy sequence. Spreading is closer to dropping ink in water than to passing a baton.</li>
+    <li><strong>Context reshapes the network.</strong> The same trigger word activates different neighbors depending on what your brain is already preoccupied with.</li>
+  </ul>
+
+  <p>The interactive below tries to make all three visible. Pick a context, press the button, and watch.</p>
+
+  <h2><span class="num">§ 01</span>The model</h2>
+
+  <div class="panel">
+
+    <div class="controls">
+      <div class="control-group">
+        <label for="ctx">Context</label>
+        <select id="ctx">
+          <option value="default">No special context</option>
+          <option value="summer">It's a hot summer day</option>
+          <option value="birthday">At a birthday party</option>
+          <option value="sick">You feel sick</option>
+        </select>
+      </div>
+      <button class="fire" id="fire">Think of ice cream →</button>
+    </div>
+
+    <div class="slider-row">
+      <label for="speed">Fade speed</label>
+      <input type="range" id="speed" min="1500" max="12000" step="500" value="7000">
+      <span class="speed-out" id="speed-out">7.0s</span>
+    </div>
+
+    <div class="stage" role="img" aria-label="Interactive network of memory nodes connected to ice cream">
+      <svg id="net" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg"></svg>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="background:#E24B4A"></span>Context peak</span>
+      <span class="legend-item"><span class="swatch" style="background:#EF9F27"></span>Strong</span>
+      <span class="legend-item"><span class="swatch" style="background:#FAC775"></span>Weaker</span>
+      <span class="legend-item"><span class="swatch" style="background:#c9bda3"></span>Inactive</span>
+    </div>
+
+  </div>
+
+  <h2><span class="num">§ 02</span>What to look for</h2>
+
+  <p>Run it once with <em>no special context</em>. You'll see "cold," "sweet," and "summer" glow the brightest — those are the strongest baseline links to ice cream. "Tummy ache" barely flickers. This is the default network.</p>
+
+  <p>Now switch the context to <em>you feel sick</em> and fire again. Watch "tummy ache" turn red — the hottest tier — while "sweet" and "birthday" go quiet. The <strong>strings themselves didn't change</strong>. What changed is how strongly each one carries the signal. That's the point.</p>
+
+  <div class="pullquote">
+    The same trigger activates different neighbors depending on what your brain is already preoccupied with. This is why a smell, a mood, or a recent thought can dramatically change what comes to mind next.
+  </div>
+
+  <p>Try <em>at a birthday party</em> next. Now "birthday" is the red peak, and "tummy ache" is quiet again. Try <em>a hot summer day</em>: "beach" wins. The network is the same network — only the weighting has shifted.</p>
+
+  <h2><span class="num">§ 03</span>What this is and isn't</h2>
+
+  <p>This is a teaching exaggeration, not a literal brain simulation. Two honest caveats worth naming:</p>
+
+  <p>First, real spreading activation happens in <strong>hundreds of milliseconds</strong>, not seconds. The slow-fade slider is unrealistically slow — but that's the point, the way slow-motion footage helps you see a hummingbird's wings. The <em>shape</em> of what happens (rapid rise, gradual decay, parallel bloom) is accurate; the timescale is dialed up so your eyes can follow it.</p>
+
+  <p>Second, real activation is a <strong>smooth continuum</strong>, not four discrete colored tiers. The four bins are a deliberate simplification — crisp categories are easier to read than a continuous gradient, even though in the actual brain it's a smooth dial, not a four-position switch.</p>
+
+  <p>Within those simplifications, though, the mechanism on display is real. Cognitive scientists talk about context-dependent retrieval, mood-congruent memory, and state-dependent activation. Hungry people see food cues everywhere. Anxious people retrieve threatening associations faster. The red tier in the model captures something true: <em>context doesn't just nudge — it can make a normally-weak link the strongest one in the whole network.</em></p>
+
+  <p class="footnote">The original spreading activation model was formalised by Allan Collins and Elizabeth Loftus in 1975. Decades of research have refined and challenged it, but the core intuition — that memory is a network where ideas wake neighboring ideas — remains one of the better-supported pictures in cognitive psychology.</p>
+
+</main>
+
+<script>
+const svg = document.getElementById('net');
+const ctxSel = document.getElementById('ctx');
+const fireBtn = document.getElementById('fire');
+const speedSlider = document.getElementById('speed');
+const speedOut = document.getElementById('speed-out');
+
+speedSlider.addEventListener('input', () => {
+  speedOut.textContent = (speedSlider.value / 1000).toFixed(1) + 's';
+});
+
+const nodes = [
+  {id:'icecream', label:'Ice cream', x:340, y:210, r:48, source:true},
+  {id:'cold',     label:'Cold',     x:140, y:90,  r:34},
+  {id:'summer',   label:'Summer',   x:340, y:60,  r:34},
+  {id:'birthday', label:'Birthday', x:540, y:90,  r:34},
+  {id:'sticky',   label:'Sticky',   x:540, y:330, r:34},
+  {id:'sweet',    label:'Sweet',    x:340, y:360, r:34},
+  {id:'cone',     label:'Cone',     x:140, y:330, r:34},
+  {id:'spoon',    label:'Spoon',    x:70,  y:210, r:30},
+  {id:'beach',    label:'Beach',    x:610, y:210, r:30},
+  {id:'tummy',    label:'Tummy ache', x:240, y:380, r:30},
+  {id:'vacuum',   label:'Vacuum',   x:610, y:380, r:26, disconnected:true}
+];
+
+const baseLinks = [
+  ['icecream','cold',0.9],
+  ['icecream','summer',0.8],
+  ['icecream','birthday',0.7],
+  ['icecream','sticky',0.6],
+  ['icecream','sweet',0.85],
+  ['icecream','cone',0.75],
+  ['icecream','spoon',0.5],
+  ['icecream','beach',0.4],
+  ['icecream','tummy',0.3]
+];
+
+const contextBoost = {
+  default:  {},
+  summer:   {summer:1.6, cold:1.4, beach:2.4, birthday:0.5, tummy:0.6},
+  birthday: {birthday:2.5, sweet:1.4, cone:1.2, summer:0.6, beach:0.4},
+  sick:     {tummy:3.5, sweet:0.4, birthday:0.5, cold:0.8}
+};
+
+const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
+const activation = Object.fromEntries(nodes.map(n => [n.id, 0]));
+
+function colorFor(a) {
+  if (a > 0.92) return {fill:'#E24B4A', stroke:'#791F1F', text:'#ffffff'};
+  if (a > 0.55) return {fill:'#EF9F27', stroke:'#854F0B', text:'#412402'};
+  if (a > 0.15) return {fill:'#FAC775', stroke:'#854F0B', text:'#633806'};
+  return {fill:'#c9bda3', stroke:'#8a7f6a', text:'#4a4438'};
+}
+
+function render() {
+  let html = '';
+  for (const [a,b] of baseLinks) {
+    const A = nodeById[a], B = nodeById[b];
+    const act = Math.max(activation[a], activation[b]);
+    const opacity = 0.18 + act * 0.7;
+    const width = 1 + act * 3.2;
+    let color = '#8a7f6a';
+    if (act > 0.92) color = '#E24B4A';
+    else if (act > 0.55) color = '#EF9F27';
+    else if (act > 0.15) color = '#FAC775';
+    html += '<line x1="'+A.x+'" y1="'+A.y+'" x2="'+B.x+'" y2="'+B.y+'" stroke="'+color+'" stroke-width="'+width.toFixed(2)+'" stroke-linecap="round" opacity="'+opacity.toFixed(2)+'"/>';
+  }
+  for (const n of nodes) {
+    const a = activation[n.id];
+    const c = n.disconnected ? {fill:'#c9bda3', stroke:'#8a7f6a', text:'#4a4438'} : colorFor(a);
+    const dash = n.disconnected ? 'stroke-dasharray="3 3"' : '';
+    const sw = n.source ? 1.5 : 0.5;
+    html += '<circle cx="'+n.x+'" cy="'+n.y+'" r="'+n.r+'" fill="'+c.fill+'" stroke="'+c.stroke+'" stroke-width="'+sw+'" '+dash+'/>';
+    html += '<text x="'+n.x+'" y="'+n.y+'" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="500" font-family="Inter, sans-serif" fill="'+c.text+'">'+n.label+'</text>';
+  }
+  svg.innerHTML = html;
+}
+
+let animating = false;
+function fire() {
+  if (animating) return;
+  animating = true;
+  const duration = parseInt(speedSlider.value, 10);
+  const start = performance.now();
+
+  function step(now) {
+    const t = (now - start) / duration;
+    if (t >= 1) {
+      for (const k of Object.keys(activation)) activation[k] = 0;
+      render();
+      animating = false;
+      return;
+    }
+    const riseTime = 0.08;
+    let envelope;
+    if (t < riseTime) {
+      envelope = t / riseTime;
+    } else {
+      const decayT = (t - riseTime) / (1 - riseTime);
+      envelope = Math.pow(1 - decayT, 1.4);
+    }
+    const ctx2 = ctxSel.value;
+    const boost2 = contextBoost[ctx2] || {};
+    activation.icecream = envelope * 0.95;
+    for (const [a, b, w] of baseLinks) {
+      const ctxMult = boost2[b] !== undefined ? boost2[b] : 1;
+      const peak = Math.min(1, w * ctxMult);
+      const jitter = 0.94 + 0.06 * Math.sin(now / 200 + b.length);
+      activation[b] = peak * envelope * jitter;
+    }
+    render();
+    requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+fireBtn.addEventListener('click', fire);
+render();
+</script>
+
+</body>
+</html>
