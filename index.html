@@ -47,6 +47,23 @@
 
   .frame { max-width: 880px; margin: 0 auto; padding: 64px 32px 96px; }
 
+
+  .series-nav {
+    display: flex;
+    gap: 8px 26px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+    margin: 0 0 40px;
+  }
+  .series-nav a { color: var(--ink-mute); text-decoration: none; }
+  .series-nav a:hover { color: var(--accent-deep); text-decoration: underline; }
+  .series-nav .here { color: var(--accent); font-weight: 500; }
+
   .kicker {
     font-family: var(--mono);
     font-size: 11px;
@@ -333,6 +350,12 @@
 <body>
 
 <main class="frame">
+
+  <nav class="series-nav" aria-label="Field Notes series">
+    <a href="https://ianpilon.github.io/spreading-activation-demo/">Vol. I · Spreading activation</a>
+    <span class="here" aria-current="page">Vol. II · The engine</span>
+    <a href="contrast.html">Vol. III · Cut open</a>
+  </nav>
 
   <p class="kicker">Cognitive Science · Field Notes · Vol. II</p>
 

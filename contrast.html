@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A recording is a loop, cut open</title>
+<style>
+  :root {
+    --paper:        #f4ede0;
+    --paper-deep:   #ebe1cf;
+    --panel:        #fbf6ea;
+    --ink:          #1d1a14;
+    --ink-soft:     #4a4438;
+    --ink-mute:     #7a7263;
+    --rule:         #c9bda3;
+    --rule-soft:    #ddd2ba;
+    --accent:       #c44a3b;
+    --accent-deep:  #7a2b1f;
+    --hot:          #E24B4A;
+    --strong:       #EF9F27;
+    --moss:         #7a8a53;
+    --tape:         #4a6a72;
+    --spoke:        #c96f1a;
+    --spoke-deep:   #8a4a0e;
+    --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    --sans: -apple-system, 'Helvetica Neue', 'Segoe UI', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--paper); }
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(0,0,0,0.025) 1px, transparent 1.5px),
+      radial-gradient(circle at 76% 42%, rgba(0,0,0,0.02) 1px, transparent 1.5px),
+      radial-gradient(circle at 32% 78%, rgba(0,0,0,0.025) 1px, transparent 1.5px);
+    background-size: 220px 220px, 180px 180px, 260px 260px;
+  }
+
+  .frame { max-width: 880px; margin: 0 auto; padding: 64px 32px 96px; }
+
+
+  .series-nav {
+    display: flex;
+    gap: 8px 26px;
+    flex-wrap: wrap;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+    margin: 0 0 40px;
+  }
+  .series-nav a { color: var(--ink-mute); text-decoration: none; }
+  .series-nav a:hover { color: var(--accent-deep); text-decoration: underline; }
+  .series-nav .here { color: var(--accent); font-weight: 500; }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin: 0 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .kicker::before, .kicker::after { content: ''; flex: 1; height: 1px; background: var(--rule); }
+
+  h1 {
+    font-family: var(--serif);
+    font-weight: 400;
+    font-size: clamp(38px, 6vw, 64px);
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+    margin: 0 0 24px;
+    font-style: italic;
+    text-wrap: balance;
+  }
+  h1 .accent { color: var(--accent); font-style: normal; font-weight: 500; }
+
+  .dek {
+    font-family: var(--serif);
+    font-size: 20px;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 640px;
+    margin: 0 0 8px;
+  }
+
+  .byline {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: 32px 0 56px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 28px;
+    letter-spacing: -0.01em;
+    margin: 56px 0 16px;
+  }
+  h2 .num {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    margin-right: 12px;
+    vertical-align: middle;
+    font-weight: 500;
+  }
+
+  p { font-size: 17px; margin: 0 0 18px; color: var(--ink); }
+  p.lead::first-letter {
+    font-family: var(--serif);
+    font-size: 56px;
+    font-weight: 500;
+    float: left;
+    line-height: 0.9;
+    margin: 6px 10px 0 0;
+    color: var(--accent);
+  }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    padding: 28px;
+    margin: 40px 0;
+    position: relative;
+  }
+  .panel::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border: 1px solid var(--rule-soft);
+    pointer-events: none;
+    transform: translate(6px, 6px);
+    z-index: -1;
+  }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 18px; }
+  button.ctl {
+    font-family: var(--sans);
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 0;
+    transition: background 0.15s;
+  }
+  button.ctl:hover { background: var(--accent); }
+  button.ctl:active { transform: translateY(1px); }
+  button.ctl:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.ctl.toggle { background: var(--paper); color: var(--ink); border: 1px solid var(--rule); }
+  button.ctl.toggle:hover { border-color: var(--ink-soft); background: var(--paper); }
+  button.ctl.cut { background: var(--accent); }
+  button.ctl.cut:hover { background: var(--accent-deep); }
+
+  .chip {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    border: 1px solid var(--rule);
+    padding: 6px 12px;
+    background: var(--paper);
+  }
+  .chip strong { color: var(--ink); font-weight: 500; }
+
+  .stage { width: 100%; background: var(--paper); border: 1px solid var(--rule); position: relative; overflow: hidden; }
+  .stage canvas { display: block; width: 100%; height: 100%; }
+  .stage.traces { aspect-ratio: 680 / 170; }
+  .stage.errs { aspect-ratio: 680 / 100; margin-top: 14px; }
+
+  .stage-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: 14px 0 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .meters { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 14px; }
+  .meter { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); }
+  .meter .bar-track { width: 110px; height: 6px; background: var(--rule-soft); position: relative; }
+  .meter .bar-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; transition: width 0.2s linear, background 0.3s; }
+  .meter .val { font-family: var(--mono); font-size: 12px; font-weight: 500; min-width: 38px; color: var(--ink); }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 18px;
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  .legend-item { display: inline-flex; align-items: center; gap: 8px; }
+  .swatch { width: 18px; height: 3px; }
+
+  figure.diagram { margin: 0; }
+  figure.diagram svg { width: 100%; height: auto; display: block; }
+  figure.diagram figcaption {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    text-align: center;
+    margin-top: 12px;
+    min-height: 34px;
+  }
+
+  .contrast { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 28px 0; }
+  .c-card { border: 1px solid var(--rule); background: var(--panel); padding: 20px 22px; }
+  .c-card.memory { border-color: var(--accent); }
+  .c-card .tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em;
+    text-transform: uppercase; margin: 0 0 12px; color: var(--tape);
+  }
+  .c-card.memory .tag { color: var(--accent); }
+  .c-card ul { margin: 0; padding-left: 18px; }
+  .c-card li { font-size: 15px; margin-bottom: 10px; color: var(--ink-soft); }
+  .c-card li::marker { color: var(--rule); }
+  .c-card.memory li::marker { color: var(--accent); }
+  .c-card li strong { font-family: var(--serif); font-style: italic; font-weight: 500; color: var(--ink); }
+
+  .pullquote {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 24px;
+    line-height: 1.35;
+    color: var(--ink-soft);
+    border-left: 3px solid var(--spoke);
+    padding: 8px 0 8px 24px;
+    margin: 36px 0;
+  }
+
+  .footnote {
+    font-size: 14px;
+    color: var(--ink-mute);
+    font-style: italic;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+    margin-top: 32px;
+  }
+
+  /* diagram text */
+  .d-station { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; fill: var(--ink); font-weight: 500; }
+  .d-self { font-family: var(--mono); font-size: 13px; font-weight: 500; letter-spacing: 0.12em; fill: var(--ink); text-anchor: middle; }
+  .d-note { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; fill: var(--accent-deep); }
+
+  @media (max-width: 640px) {
+    .frame { padding: 40px 20px 64px; }
+    .dek { font-size: 17px; }
+    .panel { padding: 16px; margin: 28px 0; }
+    h2 { font-size: 22px; }
+    .contrast { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<main class="frame">
+
+  <nav class="series-nav" aria-label="Field Notes series">
+    <a href="https://ianpilon.github.io/spreading-activation-demo/">Vol. I · Spreading activation</a>
+    <a href="index.html">Vol. II · The engine</a>
+    <span class="here" aria-current="page">Vol. III · Cut open</span>
+  </nav>
+
+  <p class="kicker">Cognitive Science · Field Notes · Vol. III</p>
+
+  <h1>A recording is a loop, <span class="accent">cut open</span></h1>
+
+  <p class="dek">Volume II claimed that cutting the memory cycle anywhere leaves you with a recording, not a memory. If that is true, we should be able to see it. Below: the same machine drawn twice, one arrow apart, and a twin experiment where a memory and a recording start identical and part company in front of you.</p>
+
+  <div class="byline">
+    <span>An interactive essay · follows Vol. II, "The engine"</span>
+    <span>Read time · 5 min</span>
+  </div>
+
+  <p class="lead">We learn by contrast. A claim like "the loop is what makes it memory" is hard to evaluate on its own, because a healthy loop and a healthy recording look identical at any single moment. Both hold a faithful trace of the world. The difference between them is not in the parts and not in the snapshot; it is in the wiring, and in what the wiring does to the future. So the honest way to show it is to build both from the same components and let time do the arguing.</p>
+
+  <h2><span class="num">§ 01</span>One arrow apart</h2>
+
+  <p>A recording is not a different kind of machine. It is this machine with the return arrow removed. Press the button and watch the cycle unroll into a pipeline: the same six stations, laid flat. Two things vanish. Action no longer reaches the world, so reconstruction becomes mere playback. And the hub has nothing to sit at the center of, so the self fades with the spokes.</p>
+
+  <div class="panel">
+    <div class="controls">
+      <button class="ctl" id="unrollBtn">✂ Cut and unroll</button>
+    </div>
+    <figure class="diagram">
+      <svg id="morph" viewBox="0 0 680 440" role="img" aria-label="Animated diagram. Closed state: six stations in a ring (stream, consolidation, readout, reconstruction, action, world) with the self at the center joined by orange spokes. Cutting the loop unrolls the ring into a flat left-to-right pipeline where action points into nothing and the self disappears."></svg>
+      <figcaption id="morphCap">Closed: six stations, one hub. Every arrow returns, so the system and its world keep tuning each other.</figcaption>
+    </figure>
+  </div>
+
+  <p>Notice what the flat version is: world in, playback out, done. A perfectly good tape recorder. Nothing about it is broken. It simply has no way to matter to the world it recorded, and no position from which a self could gate the next pass, because there is no next pass.</p>
+
+  <h2><span class="num">§ 02</span>The twin experiment</h2>
+
+  <p>Topology shows the difference in wiring. This shows the difference in consequence. The reservoir from Volume II runs below, remembering a drifting world signal, with consolidation continuously training its readout. Press the cut button at any moment and the model clones that readout, freezes the copy, and plays it forward. That frozen clone is a recording in the strict sense: a perfect, faithful snapshot of the memory at the instant of the cut.</p>
+
+  <div class="panel">
+    <div class="controls">
+      <button class="ctl toggle" id="runBtn" aria-pressed="true">Pause</button>
+      <button class="ctl cut" id="cutBtn">✂ Cut: make the recording</button>
+      <span class="chip" id="ageChip">No recording yet</span>
+    </div>
+
+    <div class="stage-label"><span>The world, the memory, and the recording</span></div>
+    <div class="stage traces"><canvas id="traces"></canvas></div>
+
+    <div class="stage-label"><span>Divergence · reconstruction error over time</span></div>
+    <div class="stage errs"><canvas id="errs"></canvas></div>
+
+    <div class="meters">
+      <span class="meter">Memory error <span class="bar-track"><span class="bar-fill" id="memBar"></span></span> <span class="val" id="memVal">–</span></span>
+      <span class="meter">Recording error <span class="bar-track"><span class="bar-fill" id="recBar"></span></span> <span class="val" id="recVal">–</span></span>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="swatch" style="background:#1d1a14"></span>The world (drifting)</span>
+      <span class="legend-item"><span class="swatch" style="background:#c44a3b"></span>Memory (loop closed, still training)</span>
+      <span class="legend-item"><span class="swatch" style="background:#4a6a72"></span>Recording (frozen at the cut)</span>
+    </div>
+  </div>
+
+  <p>At the instant you cut, the red and blue lines sit exactly on top of each other. They are the same weights. Then the world drifts, as worlds do, and they part: the memory keeps tracking, because its loop keeps closing; the recording replays what used to be true. The blue error curve climbing away from the red one is the entire argument of Volume II, drawn by the model itself. Cut again whenever you like. The recording snaps back to perfect, and immediately starts going stale again.</p>
+
+  <div class="pullquote">
+    A recording is right about the past. A memory is right about now. In a world that holds still, you cannot tell them apart.
+  </div>
+
+  <h2><span class="num">§ 03</span>What the contrast teaches</h2>
+
+  <div class="contrast">
+    <div class="c-card">
+      <p class="tag">Recording · the open chain</p>
+      <ul>
+        <li><strong>Fidelity is fixed at write time.</strong> It is most accurate at the moment it is made, and never again.</li>
+        <li><strong>Playback changes nothing.</strong> Not the world, not the recorder. Using it has no consequences.</li>
+        <li><strong>It fails silently.</strong> As the world drifts, the recording stays confident and becomes wrong.</li>
+        <li><strong>No self required.</strong> A pipeline has no hub. Nothing gates the next pass, because nothing returns.</li>
+      </ul>
+    </div>
+    <div class="c-card memory">
+      <p class="tag">Memory · the closed loop</p>
+      <ul>
+        <li><strong>Fidelity is maintained, never fixed.</strong> It is always slightly wrong and always being corrected.</li>
+        <li><strong>Remembering has consequences.</strong> Reconstruction feeds action; action changes the world that will be remembered next.</li>
+        <li><strong>It fails loudly and self-corrects.</strong> Error is a signal inside the loop, not a fact about it.</li>
+        <li><strong>A self falls out of the wiring.</strong> Something must gate each pass, and each pass re-tunes the thing doing the gating.</li>
+      </ul>
+    </div>
+  </div>
+
+  <p>Notice also what the contrast quietly dissolves: the intuition that a memory is a recording plus some extra machinery. It is the other way round. The recording is the degenerate case, a loop with its return arrow cut, which is exactly why the experiment above can manufacture one from a memory at the press of a button but could never manufacture a memory from a recording. Freezing is easy. Closing the loop is the whole trick.</p>
+
+  <h2><span class="num">§ 04</span>What this is and isn't</h2>
+
+  <p>The usual caveat applies: the "recording" here is a frozen readout, which isolates one dimension of the contrast (currency versus fidelity) and stages it cleanly. Real recordings also degrade physically, and real memories differ from recordings in ways this model doesn't touch, like being reshaped by every act of recall. And the world's drift is simulated, so the demonstration assumes the one thing recordings are bad at. That assumption is the honest part: the claim was never that loops beat recordings in general. It is that in a drifting world, the kind we actually live in, only the loop stays about anything.</p>
+
+  <p class="footnote">The twin-experiment design follows the logic of an ablation study: hold everything constant, remove one arrow, and attribute the difference to the arrow. The observation that remembering is reconstruction under present conditions, not playback, goes back to Frederic Bartlett (1932). The framing of the self as the hub of a closed sensing-acting cycle follows Michael Levin.</p>
+
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var NSVG = 'http://www.w3.org/2000/svg';
+
+  // =====================================================
+  // § 01 — the unrolling diagram
+  // =====================================================
+  var morph = document.getElementById('morph');
+  var morphCap = document.getElementById('morphCap');
+  var unrollBtn = document.getElementById('unrollBtn');
+
+  // stations in flow order: world -> stream -> consolidation -> readout -> reconstruction -> action
+  var stations = [
+    { name: 'WORLD',          ring: [218.8, 140], line: [80, 210]  },
+    { name: 'STREAM',         ring: [340, 70],    line: [184, 210] },
+    { name: 'CONSOLIDATION',  ring: [461.2, 140], line: [288, 210] },
+    { name: 'READOUT',        ring: [461.2, 280], line: [392, 210] },
+    { name: 'RECONSTRUCTION', ring: [340, 350],   line: [496, 210] },
+    { name: 'ACTION',         ring: [218.8, 280], line: [600, 210] }
+  ];
+  // label offsets: radial-ish in ring state, below-station in line state
+  var CXD = 340, CYD = 210;
+  stations.forEach(function (s) {
+    var dx = s.ring[0] - CXD, dy = s.ring[1] - CYD;
+    var m = Math.sqrt(dx * dx + dy * dy) || 1;
+    s.ringLab = [s.ring[0] + dx / m * 38, s.ring[1] + dy / m * 38];
+    s.lineLab = [s.line[0], s.line[1] + 34];
+  });
+
+  function svgEl(name, attrs, parent) {
+    var e = document.createElementNS(NSVG, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    (parent || morph).appendChild(e);
+    return e;
+  }
+
+  var defs = svgEl('defs', {});
+  var mk = svgEl('marker', { id: 'mArrInk', viewBox: '0 0 10 8', refX: 8, refY: 4, markerWidth: 8, markerHeight: 7, orient: 'auto' }, defs);
+  svgEl('path', { d: 'M0,0 L10,4 L0,8 Z', fill: '#4a4438' }, mk);
+  var mk2 = svgEl('marker', { id: 'mArrSpk', viewBox: '0 0 10 8', refX: 9, refY: 4, markerWidth: 7, markerHeight: 6, orient: 'auto' }, defs);
+  svgEl('path', { d: 'M0,0 L10,4 L0,8 Z', fill: '#c96f1a' }, mk2);
+  var mk3 = svgEl('marker', { id: 'mArrSpkR', viewBox: '0 0 10 8', refX: 9, refY: 4, markerWidth: 7, markerHeight: 6, orient: 'auto-start-reverse' }, defs);
+  svgEl('path', { d: 'M0,0 L10,4 L0,8 Z', fill: '#c96f1a' }, mk3);
+  var mk4 = svgEl('marker', { id: 'mArrCut', viewBox: '0 0 10 8', refX: 8, refY: 4, markerWidth: 8, markerHeight: 7, orient: 'auto' }, defs);
+  svgEl('path', { d: 'M0,0 L10,4 L0,8 Z', fill: '#c44a3b' }, mk4);
+
+  var spokeGroup = svgEl('g', {});
+  var edgeGroup = svgEl('g', {});
+  var nodeGroup = svgEl('g', {});
+
+  // spokes (self <-> each station)
+  var spokes = stations.map(function () {
+    return svgEl('line', { stroke: '#c96f1a', 'stroke-width': 2.5, 'marker-end': 'url(#mArrSpk)', 'marker-start': 'url(#mArrSpkR)' }, spokeGroup);
+  });
+
+  // forward edges between consecutive stations
+  var edges = [];
+  for (var ei = 0; ei < 5; ei++) {
+    edges.push(svgEl('line', { stroke: '#4a4438', 'stroke-width': 1.5, 'marker-end': 'url(#mArrInk)' }, edgeGroup));
+  }
+  // the closing edge: action -> world
+  var closingEdge = svgEl('line', { stroke: '#4a4438', 'stroke-width': 1.5, 'marker-end': 'url(#mArrInk)' }, edgeGroup);
+  // the dangling stub that replaces it when cut
+  var stub = svgEl('line', { stroke: '#c44a3b', 'stroke-width': 1.5, 'stroke-dasharray': '4 4', 'marker-end': 'url(#mArrCut)', opacity: 0 }, edgeGroup);
+  var stubText = svgEl('text', { 'class': 'd-note', opacity: 0, 'text-anchor': 'start' }, edgeGroup);
+  stubText.textContent = 'never returns';
+
+  // self hub
+  var selfCircle = svgEl('circle', { cx: CXD, cy: CYD, r: 36, fill: '#EF9F27', stroke: '#8a4a0e', 'stroke-width': 1.5 }, nodeGroup);
+  var selfText = svgEl('text', { x: CXD, y: CYD + 5, 'class': 'd-self' }, nodeGroup);
+  selfText.textContent = 'SELF';
+
+  // station dots + labels
+  var dots = [], labels = [];
+  stations.forEach(function (s) {
+    dots.push(svgEl('circle', { r: 5, fill: '#1d1a14' }, nodeGroup));
+    var t = svgEl('text', { 'class': 'd-station' }, nodeGroup);
+    t.textContent = s.name;
+    labels.push(t);
+  });
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function ease(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+
+  // shorten a segment on both ends so arrows don't overlap dots
+  function trim(x1, y1, x2, y2, pad1, pad2) {
+    var dx = x2 - x1, dy = y2 - y1, m = Math.sqrt(dx * dx + dy * dy) || 1;
+    return [x1 + dx / m * pad1, y1 + dy / m * pad1, x2 - dx / m * pad2, y2 - dy / m * pad2];
+  }
+
+  function layout(t) {
+    var e = ease(t);
+    var P = stations.map(function (s) {
+      return [lerp(s.ring[0], s.line[0], e), lerp(s.ring[1], s.line[1], e)];
+    });
+    var L = stations.map(function (s) {
+      return [lerp(s.ringLab[0], s.lineLab[0], e), lerp(s.ringLab[1], s.lineLab[1], e)];
+    });
+
+    for (var i = 0; i < 6; i++) {
+      dots[i].setAttribute('cx', P[i][0]);
+      dots[i].setAttribute('cy', P[i][1]);
+      var anchor = 'middle';
+      if (e < 0.5) {
+        if (P[i][0] > CXD + 40) anchor = 'start';
+        else if (P[i][0] < CXD - 40) anchor = 'end';
+      }
+      labels[i].setAttribute('x', L[i][0]);
+      labels[i].setAttribute('y', L[i][1] + 4);
+      labels[i].setAttribute('text-anchor', anchor);
+    }
+
+    for (var k = 0; k < 5; k++) {
+      var seg = trim(P[k][0], P[k][1], P[k + 1][0], P[k + 1][1], 9, 12);
+      edges[k].setAttribute('x1', seg[0]); edges[k].setAttribute('y1', seg[1]);
+      edges[k].setAttribute('x2', seg[2]); edges[k].setAttribute('y2', seg[3]);
+    }
+
+    // closing edge fades out as the loop opens
+    var closeSeg = trim(P[5][0], P[5][1], P[0][0], P[0][1], 9, 12);
+    closingEdge.setAttribute('x1', closeSeg[0]); closingEdge.setAttribute('y1', closeSeg[1]);
+    closingEdge.setAttribute('x2', closeSeg[2]); closingEdge.setAttribute('y2', closeSeg[3]);
+    closingEdge.setAttribute('opacity', Math.max(0, 1 - e * 1.6));
+
+    // dangling stub fades in near the flat state
+    var stubOn = Math.max(0, (e - 0.7) / 0.3);
+    stub.setAttribute('x1', P[5][0] + 9); stub.setAttribute('y1', P[5][1]);
+    stub.setAttribute('x2', P[5][0] + 52); stub.setAttribute('y2', P[5][1]);
+    stub.setAttribute('opacity', stubOn);
+    stubText.setAttribute('x', P[5][0] + 14);
+    stubText.setAttribute('y', P[5][1] - 12);
+    stubText.setAttribute('opacity', stubOn);
+
+    // self + spokes fade with the hub's reason to exist
+    var hubOn = Math.max(0, 1 - e * 1.4);
+    selfCircle.setAttribute('opacity', hubOn);
+    selfText.setAttribute('opacity', hubOn);
+    for (var s2 = 0; s2 < 6; s2++) {
+      var sp = trim(CXD, CYD, P[s2][0], P[s2][1], 40, 12);
+      spokes[s2].setAttribute('x1', sp[0]); spokes[s2].setAttribute('y1', sp[1]);
+      spokes[s2].setAttribute('x2', sp[2]); spokes[s2].setAttribute('y2', sp[3]);
+      spokes[s2].setAttribute('opacity', hubOn * 0.9);
+    }
+  }
+
+  var morphT = 0, morphTarget = 0, morphAnimating = false;
+  function morphFrame() {
+    var d = morphTarget - morphT;
+    if (Math.abs(d) < 0.008) {
+      morphT = morphTarget;
+      layout(morphT);
+      morphAnimating = false;
+      return;
+    }
+    morphT += d * 0.09;
+    layout(morphT);
+    requestAnimationFrame(morphFrame);
+  }
+  unrollBtn.addEventListener('click', function () {
+    morphTarget = morphTarget === 0 ? 1 : 0;
+    var open = morphTarget === 1;
+    unrollBtn.textContent = open ? 'Re-close the loop' : '✂ Cut and unroll';
+    morphCap.textContent = open
+      ? 'Cut: the same six parts laid flat. A tape recorder. Nothing returns to the world, and nothing needs a self.'
+      : 'Closed: six stations, one hub. Every arrow returns, so the system and its world keep tuning each other.';
+    if (reduced) { morphT = morphTarget; layout(morphT); return; }
+    if (!morphAnimating) { morphAnimating = true; requestAnimationFrame(morphFrame); }
+  });
+  layout(0);
+
+  // =====================================================
+  // § 02 — the twin experiment
+  // =====================================================
+  function randn() {
+    var u = 0, v = 0;
+    while (u === 0) u = Math.random();
+    while (v === 0) v = Math.random();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  }
+
+  var N = 90;
+  var W = new Float32Array(N * N);
+  for (var i = 0; i < N; i++) {
+    for (var j = 0; j < N; j++) {
+      if (i !== j && Math.random() < 0.1) W[i * N + j] = randn();
+    }
+  }
+  (function scaleW() {
+    var v = new Float32Array(N), nv = new Float32Array(N), est = 1;
+    for (var i2 = 0; i2 < N; i2++) v[i2] = randn();
+    for (var it = 0; it < 40; it++) {
+      var norm = 0;
+      for (var a = 0; a < N; a++) {
+        var s = 0;
+        for (var b = 0; b < N; b++) s += W[a * N + b] * v[b];
+        nv[a] = s; norm += s * s;
+      }
+      norm = Math.sqrt(norm) || 1;
+      est = norm;
+      for (var c = 0; c < N; c++) v[c] = nv[c] / norm;
+    }
+    var sc = 0.92 / (est || 1);
+    for (var k = 0; k < W.length; k++) W[k] *= sc;
+  })();
+
+  var win = new Float32Array(N), biasV = new Float32Array(N);
+  for (var i3 = 0; i3 < N; i3++) { win[i3] = (Math.random() * 2 - 1) * 0.9; biasV[i3] = (Math.random() * 2 - 1) * 0.2; }
+
+  var x = new Float32Array(N);
+  var wMem = new Float32Array(N), bMem = 0;      // the memory: always training
+  var wRec = new Float32Array(N), bRec = 0;      // the recording: frozen clone
+  var recActive = false, recSteps = 0;
+
+  var th1 = 0, th2 = 0, w1 = 0.045;
+  var ALPHA = 0.3;
+  var world = 0, stream = 0, yMem = 0, yRec = 0;
+  var emaMem = 1, emaRec = 0;
+
+  function simStep() {
+    // the world drifts; the memory's loop keeps it merely drifting, not chaotic
+    w1 += randn() * 0.00045;
+    w1 += (0.05 - w1) * 0.0006;
+    if (w1 < 0.02) w1 = 0.02;
+    if (w1 > 0.10) w1 = 0.10;
+    th1 += w1; th2 += w1 * 2.51;
+    world = Math.sin(th1) + 0.5 * Math.sin(th2);
+
+    stream = world + 0.25 * randn();
+
+    var pre = new Float32Array(N);
+    for (var a = 0; a < N; a++) {
+      var s = win[a] * stream + biasV[a];
+      var row = a * N;
+      for (var b = 0; b < N; b++) s += W[row + b] * x[b];
+      pre[a] = s;
+    }
+    for (var c = 0; c < N; c++) x[c] = (1 - ALPHA) * x[c] + ALPHA * Math.tanh(pre[c]);
+
+    // memory readout: runs and trains
+    var ym = bMem;
+    for (var d = 0; d < N; d++) ym += wMem[d] * x[d];
+    yMem = ym;
+    var err = world - ym;
+    emaMem = 0.996 * emaMem + 0.004 * Math.min(2, Math.abs(err));
+    var xx = 1;
+    for (var e = 0; e < N; e++) xx += x[e] * x[e];
+    var g = 0.35 * err / xx;
+    for (var f = 0; f < N; f++) wMem[f] += g * x[f];
+    bMem += 0.008 * err;
+
+    // recording readout: runs, never trains
+    if (recActive) {
+      var yr = bRec;
+      for (var h = 0; h < N; h++) yr += wRec[h] * x[h];
+      yRec = yr;
+      emaRec = 0.996 * emaRec + 0.004 * Math.min(2, Math.abs(world - yr));
+      recSteps++;
+    }
+  }
+
+  // ---------- drawing ----------
+  var traces = document.getElementById('traces');
+  var errsCv = document.getElementById('errs');
+  var tctx = traces.getContext('2d');
+  var ectx = errsCv.getContext('2d');
+
+  function fitCanvas(cv, aw, ah) {
+    var dpr = window.devicePixelRatio || 1;
+    var w = cv.clientWidth || aw;
+    var h = w * ah / aw;
+    cv.width = Math.round(w * dpr);
+    cv.height = Math.round(h * dpr);
+    return { w: w, h: h, dpr: dpr };
+  }
+  var tDim = fitCanvas(traces, 680, 170);
+  var eDim = fitCanvas(errsCv, 680, 100);
+  window.addEventListener('resize', function () {
+    tDim = fitCanvas(traces, 680, 170);
+    eDim = fitCanvas(errsCv, 680, 100);
+  });
+
+  var BUF = 640;
+  var bufP = new Float32Array(BUF), bufM = new Float32Array(BUF), bufR = new Float32Array(BUF);
+  var bufEM = new Float32Array(BUF), bufER = new Float32Array(BUF);
+  var hasRec = new Uint8Array(BUF);
+  var bufIdx = 0, bufFill = 0;
+
+  function pushSample() {
+    bufP[bufIdx] = world; bufM[bufIdx] = yMem; bufR[bufIdx] = yRec;
+    bufEM[bufIdx] = emaMem; bufER[bufIdx] = emaRec;
+    hasRec[bufIdx] = recActive ? 1 : 0;
+    bufIdx = (bufIdx + 1) % BUF;
+    if (bufFill < BUF) bufFill++;
+  }
+
+  function drawLine(ctx, dim, buf, color, width, yOf, gateBuf) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    var started = false;
+    for (var i = 0; i < bufFill; i++) {
+      var idx = (bufIdx - bufFill + i + 2 * BUF) % BUF;
+      if (gateBuf && !gateBuf[idx]) { started = false; continue; }
+      var px = i / (BUF - 1) * dim.w;
+      var py = yOf(buf[idx], dim);
+      if (!started) { ctx.moveTo(px, py); started = true; } else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+  }
+
+  function traceY(v, dim) { return dim.h / 2 - v * dim.h / 6.0; }
+  function errY(v, dim) { return dim.h - 6 - Math.min(1, v / 1.2) * (dim.h - 16); }
+
+  function drawTraces() {
+    tctx.setTransform(tDim.dpr, 0, 0, tDim.dpr, 0, 0);
+    tctx.clearRect(0, 0, tDim.w, tDim.h);
+    tctx.strokeStyle = 'rgba(29,26,20,0.12)';
+    tctx.lineWidth = 1;
+    tctx.beginPath(); tctx.moveTo(0, tDim.h / 2); tctx.lineTo(tDim.w, tDim.h / 2); tctx.stroke();
+    drawLine(tctx, tDim, bufP, '#1d1a14', 1.7, traceY, null);
+    if (recActive || anyRec()) drawLine(tctx, tDim, bufR, '#4a6a72', 1.7, traceY, hasRec);
+    drawLine(tctx, tDim, bufM, '#c44a3b', 1.9, traceY, null);
+  }
+
+  function anyRec() {
+    for (var i = 0; i < bufFill; i++) if (hasRec[i]) return true;
+    return false;
+  }
+
+  function drawErrs() {
+    ectx.setTransform(eDim.dpr, 0, 0, eDim.dpr, 0, 0);
+    ectx.clearRect(0, 0, eDim.w, eDim.h);
+    ectx.strokeStyle = 'rgba(29,26,20,0.12)';
+    ectx.lineWidth = 1;
+    ectx.beginPath(); ectx.moveTo(0, eDim.h - 6); ectx.lineTo(eDim.w, eDim.h - 6); ectx.stroke();
+
+    // divergence wedge: fill between the two error curves where the recording exists
+    if (anyRec()) {
+      ectx.fillStyle = 'rgba(74,106,114,0.16)';
+      ectx.beginPath();
+      var started = false, firstX = 0;
+      var pts = [];
+      for (var i = 0; i < bufFill; i++) {
+        var idx = (bufIdx - bufFill + i + 2 * BUF) % BUF;
+        if (!hasRec[idx]) { continue; }
+        var px = i / (BUF - 1) * eDim.w;
+        if (!started) { ectx.moveTo(px, errY(bufER[idx], eDim)); started = true; firstX = px; }
+        else ectx.lineTo(px, errY(bufER[idx], eDim));
+        pts.push([px, errY(bufEM[idx], eDim)]);
+      }
+      for (var k = pts.length - 1; k >= 0; k--) ectx.lineTo(pts[k][0], pts[k][1]);
+      if (started) { ectx.closePath(); ectx.fill(); }
+    }
+
+    drawLine(ectx, eDim, bufEM, '#c44a3b', 1.6, errY, null);
+    if (anyRec()) drawLine(ectx, eDim, bufER, '#4a6a72', 1.6, errY, hasRec);
+  }
+
+  // ---------- meters / chip ----------
+  var memBar = document.getElementById('memBar'), memVal = document.getElementById('memVal');
+  var recBar = document.getElementById('recBar'), recVal = document.getElementById('recVal');
+  var ageChip = document.getElementById('ageChip');
+
+  function meterColor(v) { return v < 0.14 ? 'var(--moss)' : (v < 0.4 ? 'var(--strong)' : 'var(--hot)'); }
+  function drawMeters() {
+    memBar.style.width = (Math.min(1, emaMem / 1.2) * 100).toFixed(1) + '%';
+    memBar.style.background = meterColor(emaMem);
+    memVal.textContent = emaMem.toFixed(2);
+    if (recActive) {
+      recBar.style.width = (Math.min(1, emaRec / 1.2) * 100).toFixed(1) + '%';
+      recBar.style.background = meterColor(emaRec);
+      recVal.textContent = emaRec.toFixed(2);
+      ageChip.innerHTML = 'Recording age · <strong>' + (recSteps / 120).toFixed(1) + 's</strong>';
+    } else {
+      recBar.style.width = '0%';
+      recVal.textContent = '–';
+    }
+  }
+
+  // ---------- controls ----------
+  var runBtn = document.getElementById('runBtn');
+  var cutBtn = document.getElementById('cutBtn');
+  var running = true;
+
+  runBtn.addEventListener('click', function () {
+    running = !running;
+    runBtn.textContent = running ? 'Pause' : 'Run';
+    runBtn.setAttribute('aria-pressed', String(running));
+    if (running) requestAnimationFrame(frame);
+  });
+
+  cutBtn.addEventListener('click', function () {
+    wRec.set(wMem); bRec = bMem;
+    emaRec = emaMem;
+    recActive = true;
+    recSteps = 0;
+    cutBtn.textContent = '✂ Re-cut: new recording';
+  });
+
+  function frame() {
+    if (!running) return;
+    simStep(); pushSample();
+    simStep(); pushSample();
+    drawTraces();
+    drawErrs();
+    drawMeters();
+    requestAnimationFrame(frame);
+  }
+
+  if (reduced) {
+    running = false;
+    runBtn.textContent = 'Run';
+    runBtn.setAttribute('aria-pressed', 'false');
+    for (var w2 = 0; w2 < 900; w2++) simStep();           // settle + train
+    wRec.set(wMem); bRec = bMem; emaRec = emaMem; recActive = true;
+    cutBtn.textContent = '✂ Re-cut: new recording';
+    for (var w3 = 0; w3 < 640; w3++) { simStep(); pushSample(); }
+    drawTraces(); drawErrs(); drawMeters();
+    ageChip.innerHTML = 'Recording age · <strong>' + (recSteps / 120).toFixed(1) + 's</strong>';
+  } else {
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+</body>
+</html>

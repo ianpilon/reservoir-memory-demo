@@ -21,4 +21,15 @@ The core claims of the model, each runnable as an experiment:
 - **Close the self-gate** — the stream fills with distractor and the readout tunes to the wrong world. Gating selects which world you end up remembering.
 - **Sever the loop** — action stops stabilizing the world, the world wanders and lurches, and memory degrades into a recording device pointed at chaos.
 
-The whole page is one self-contained `index.html`: inline CSS, canvas simulation, and SVG, no external assets. Companion to [memory-living-loop](https://github.com/ianpilon/memory-living-loop).
+## Vol. III — A recording is a loop, cut open
+
+**Live page:** https://ianpilon.github.io/reservoir-memory-demo/contrast.html
+
+A companion essay (`contrast.html`) that teaches the loop claim by contrast, in two moves:
+
+1. **One arrow apart.** An animated diagram that cuts the six-station ring and unrolls it into a flat pipeline. The return arrow dangles into nothing, and the self fades out with its spokes: a pipeline has no hub for a self to occupy.
+2. **The twin experiment.** The same live reservoir, with a "cut" button that clones the memory's readout and freezes the copy. Memory and recording are identical at the instant of the cut, then part company as the world drifts. The divergence wedge between their error curves is the argument.
+
+Both pages carry a shared series nav linking Vol. I ([spreading-activation-demo](https://ianpilon.github.io/spreading-activation-demo/)), Vol. II (`index.html`), and Vol. III (`contrast.html`).
+
+Each page is one self-contained HTML file: inline CSS, canvas simulation, and SVG, no external assets. Companion to [memory-living-loop](https://github.com/ianpilon/memory-living-loop).
