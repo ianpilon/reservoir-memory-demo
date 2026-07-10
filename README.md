@@ -1,5 +1,7 @@
 # The engine: a closed cycle over reservoirs
 
+![Vol. I, "How one memory wakes another" — the series opener at the site root](screenshot.png)
+
 **Live page:** https://ianpilon.github.io/memory-field-notes/engine.html — the series opens with Vol. I at the [site root](https://ianpilon.github.io/memory-field-notes/).
 
 An interactive essay on the reservoir-computing model of memory, with a real echo state network running live in the browser. Field Notes Vol. II, following [spreading-activation-demo](https://github.com/ianpilon/spreading-activation-demo) (Vol. I).
