@@ -47,4 +47,4 @@ Gist / detail / intrusion meters are scored against an offstage copy of the orig
 
 All four volumes live in this repo and carry a shared series nav: Vol. I (`index.html`, the site root, a copy of [spreading-activation-demo](https://github.com/ianpilon/spreading-activation-demo)), Vol. II (`engine.html`), Vol. III (`contrast.html`), and Vol. IV (`reconsolidation.html`), so you can move between volumes without leaving the site.
 
-Each page is one self-contained HTML file: inline CSS, canvas simulation, and SVG, no external assets. Companion to [memory-living-loop](https://github.com/ianpilon/memory-living-loop).
+Each page is one self-contained HTML file: inline CSS, canvas simulation, and SVG, no external assets. Companion to the [living-loop mental model](https://ianpilon.github.io/agent-memory-architecture/living-loop.html) in [agent-memory-architecture](https://github.com/ianpilon/agent-memory-architecture).
