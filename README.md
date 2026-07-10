@@ -1,6 +1,6 @@
 # The engine: a closed cycle over reservoirs
 
-**Live page:** https://ianpilon.github.io/reservoir-memory-demo/
+**Live page:** https://ianpilon.github.io/memory-field-notes/
 
 An interactive essay on the reservoir-computing model of memory, with a real echo state network running live in the browser. Field Notes Vol. II, following [spreading-activation-demo](https://github.com/ianpilon/spreading-activation-demo) (Vol. I).
 
@@ -23,7 +23,7 @@ The core claims of the model, each runnable as an experiment:
 
 ## Vol. III — A recording is a loop, cut open
 
-**Live page:** https://ianpilon.github.io/reservoir-memory-demo/contrast.html
+**Live page:** https://ianpilon.github.io/memory-field-notes/contrast.html
 
 A companion essay (`contrast.html`) that teaches the loop claim by contrast, in two moves:
 
@@ -32,7 +32,7 @@ A companion essay (`contrast.html`) that teaches the loop claim by contrast, in 
 
 ## Vol. IV — Every recall reopens the write
 
-**Live page:** https://ianpilon.github.io/reservoir-memory-demo/reconsolidation.html
+**Live page:** https://ianpilon.github.io/memory-field-notes/reconsolidation.html
 
 Vol. III conceded that the model didn't touch memories being reshaped by every act of recall. Vol. IV (`reconsolidation.html`) closes that gap: the same reservoir, holding a memory of a *finished* event. The world signal is gone; only a recall cue remains, so the only thing that can retrain the readout is the act of remembering itself.
 
